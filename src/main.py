@@ -8,9 +8,9 @@ app = FastAPI(
     title="AI Recipe Recommendation Agent",
     description=(
         "An agent-based Python API that recommends recipes based on "
-        "available ingredients using TheMealDB API and a local fallback database."
+        "available ingredients using MongoDB as the recipe database."
     ),
-    version="0.3.0"
+    version="0.4.0"
 )
 
 agent = RecipeRecommendationAgent()
@@ -20,7 +20,7 @@ agent = RecipeRecommendationAgent()
 def root():
     return {
         "message": "Welcome to the AI Recipe Recommendation Agent API.",
-        "version": "0.3.0",
+        "version": "0.4.0",
         "docs": "/docs"
     }
 
@@ -32,50 +32,54 @@ def health_check():
     }
 
 
+@app.get("/database/status")
+def database_status():
+    try:
+        return agent.recipe_database.get_status()
+
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=str(error))
+
+
 @app.post("/recommend")
 def recommend_recipes(request: RecommendationRequest):
     try:
         return agent.recommend(
             raw_ingredients=request.ingredients,
-            max_results=request.max_results,
-            use_online_api=request.use_online_api
+            max_results=request.max_results
         )
 
     except ValueError as error:
         raise HTTPException(status_code=400, detail=str(error))
 
-    except FileNotFoundError as error:
+    except Exception as error:
         raise HTTPException(status_code=500, detail=str(error))
 
 
-@app.get("/recipes/local")
-def get_local_recipes(limit: int = Query(default=20, ge=1, le=100)):
-    try:
-        recipes = agent.recipe_database.load_recipes()
-
-        return {
-            "source": "local database",
-            "total_recipes": len(recipes),
-            "recipes": recipes[:limit]
-        }
-
-    except FileNotFoundError as error:
-        raise HTTPException(status_code=500, detail=str(error))
-
-
-@app.get("/external/search/{ingredient}")
-def search_external_recipes(
-    ingredient: str,
-    limit: int = Query(default=5, ge=1, le=10)
+@app.get("/recipes/search")
+def search_recipes(
+    ingredients: str = Query(
+        example="flour, sugar, eggs"
+    ),
+    limit: int = Query(default=10, ge=1, le=100)
 ):
     try:
-        meal_summaries = agent.recipe_api.search_by_main_ingredient(ingredient)
+        parsed_ingredients = agent.ingredient_parser.parse(ingredients)
+
+        recipes = agent.recipe_database.find_candidate_recipes(
+            user_ingredients=parsed_ingredients,
+            limit=limit
+        )
 
         return {
-            "source": "TheMealDB API",
-            "main_ingredient": ingredient,
-            "results": meal_summaries[:limit]
+            "data_source": agent.recipe_database.source_name,
+            "ingredients": parsed_ingredients,
+            "total_results": len(recipes),
+            "recipes": recipes
         }
 
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error))
+
     except Exception as error:
-        raise HTTPException(status_code=502, detail=str(error))
+        raise HTTPException(status_code=500, detail=str(error))

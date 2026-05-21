@@ -22,6 +22,7 @@ build/
 dist/
 *.egg-info/
 data/external/recipes-github/
+data/recipes.json
 tmp/
 temp/
 *.tmp

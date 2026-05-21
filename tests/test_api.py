@@ -1,9 +1,27 @@
 from fastapi.testclient import TestClient
 
-from src.main import app
+from src import main
 
 
-client = TestClient(app)
+class FakeAgent:
+    def recommend(self, raw_ingredients: str, max_results: int = 5):
+        return {
+            "user_ingredients": ["flour", "sugar"],
+            "data_source": "fake database",
+            "total_recommendations": 1,
+            "summary": "The best recommendation is Test Recipe with a match score of 50.0%.",
+            "recommendations": [
+                {
+                    "name": "Test Recipe",
+                    "match_score": 50.0,
+                    "available_ingredients": ["flour"],
+                    "missing_ingredients": ["sugar"]
+                }
+            ]
+        }
+
+
+client = TestClient(main.app)
 
 
 def test_health_endpoint():
@@ -13,13 +31,14 @@ def test_health_endpoint():
     assert response.json()["status"] == "ok"
 
 
-def test_recommend_endpoint_with_local_database():
+def test_recommend_endpoint(monkeypatch):
+    monkeypatch.setattr(main, "agent", FakeAgent())
+
     response = client.post(
         "/recommend",
         json={
-            "ingredients": "flour, sugar, eggs, butter",
-            "max_results": 5,
-            "use_online_api": False
+            "ingredients": "flour, sugar",
+            "max_results": 5
         }
     )
 
@@ -29,7 +48,7 @@ def test_recommend_endpoint_with_local_database():
 
     assert "summary" in data
     assert "recommendations" in data
-    assert data["data_source"] == "local database"
+    assert data["data_source"] == "fake database"
 
 
 def test_recommend_endpoint_rejects_empty_input():
@@ -37,20 +56,8 @@ def test_recommend_endpoint_rejects_empty_input():
         "/recommend",
         json={
             "ingredients": "",
-            "max_results": 3,
-            "use_online_api": False
+            "max_results": 5
         }
     )
 
     assert response.status_code == 400
-
-
-def test_local_recipes_endpoint():
-    response = client.get("/recipes/local?limit=5")
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert "recipes" in data
-    assert "total_recipes" in data

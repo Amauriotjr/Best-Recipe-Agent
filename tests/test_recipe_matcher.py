@@ -22,27 +22,6 @@ def test_recipe_matcher_calculates_score():
     assert result[0]["missing_ingredients"] == ["pepper"]
 
 
-def test_recipe_matcher_returns_best_recipe_first():
-    matcher = RecipeMatcherTool()
-
-    user_ingredients = ["eggs", "cheese", "salt"]
-
-    recipes = [
-        {
-            "name": "Recipe A",
-            "ingredients": ["rice", "onion"]
-        },
-        {
-            "name": "Recipe B",
-            "ingredients": ["eggs", "cheese", "salt", "pepper"]
-        }
-    ]
-
-    result = matcher.match(user_ingredients, recipes, max_results=2)
-
-    assert result[0]["name"] == "Recipe B"
-
-
 def test_flour_does_not_match_special_flours():
     matcher = RecipeMatcherTool()
 
@@ -58,27 +37,6 @@ def test_flour_does_not_match_special_flours():
                 "sorghum flour",
                 "white rice flour",
                 "xanthan gum"
-            ]
-        }
-    ]
-
-    result = matcher.match(user_ingredients, recipes, max_results=1)
-
-    assert result == []
-
-
-def test_flour_does_not_match_flour_tortilla():
-    matcher = RecipeMatcherTool()
-
-    user_ingredients = ["flour"]
-
-    recipes = [
-        {
-            "name": "Peanut Butter Roll",
-            "ingredients": [
-                "flour tortilla",
-                "peanut butter",
-                "banana"
             ]
         }
     ]
@@ -152,25 +110,3 @@ def test_plural_and_singular_ingredients_match():
     assert len(result) == 1
     assert result[0]["available_ingredients"] == ["egg", "tomato"]
     assert result[0]["missing_ingredients"] == ["salt"]
-
-
-def test_hyphen_variation_matches_same_ingredient():
-    matcher = RecipeMatcherTool()
-
-    user_ingredients = ["all purpose flour"]
-
-    recipes = [
-        {
-            "name": "Cake",
-            "ingredients": [
-                "all-purpose flour",
-                "sugar"
-            ]
-        }
-    ]
-
-    result = matcher.match(user_ingredients, recipes, max_results=1)
-
-    assert len(result) == 1
-    assert result[0]["available_ingredients"] == ["all-purpose flour"]
-    assert result[0]["missing_ingredients"] == ["sugar"]

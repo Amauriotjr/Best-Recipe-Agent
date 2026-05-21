@@ -11,7 +11,3 @@ class RecommendationRequest(BaseModel):
         le=20,
         example=5
     )
-    use_online_api: bool = Field(
-        default=True,
-        example=False
-    )

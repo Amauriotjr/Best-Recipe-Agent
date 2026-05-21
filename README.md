@@ -2,9 +2,9 @@
 
 AI Recipe Recommendation Agent is a Python-based agent system that recommends recipes based on ingredients provided by the user.
 
-The system receives a list of ingredients, processes the input, retrieves recipe data from an online API or a local database, compares ingredients, calculates match scores, and returns structured recipe recommendations.
+The system receives a list of ingredients, processes the input, retrieves recipe data from MongoDB, compares ingredients, calculates match scores, and returns structured recipe recommendations through a FastAPI API.
 
-This project was developed as an AI- and agent-based Python software system. It demonstrates tool usage, external data retrieval, local data processing, API development, testing, and deployment preparation.
+This project was developed as an AI- and agent-based Python software system. It demonstrates tool usage, database access, external data conversion, API development, testing, and deployment preparation.
 
 ## Project Goal
 
@@ -22,21 +22,23 @@ The system then recommends recipes and shows:
 - the match score for each recipe;
 - available ingredients;
 - missing ingredients;
-- the data source used;
-- links to online recipes when available.
+- the database source used;
+- links to original recipe sources when available.
 
 ## Main Features
 
 - Receives ingredients from the user
 - Cleans and normalizes ingredient input
 - Uses an agent-based workflow
-- Uses TheMealDB API as an online recipe source
-- Uses a local JSON recipe database as fallback
+- Uses MongoDB as the main recipe database
 - Imports recipe data from an external GitHub dataset
 - Converts external JSON recipe data into the internal project format
-- Removes quantities, fractions, and measurement units from ingredients
+- Removes quantities, fractions, and measurement units from ingredient names
+- Stores normalized ingredients in MongoDB for search
 - Compares user ingredients with recipe ingredients
 - Calculates recipe match scores
+- Avoids false ingredient matches such as `flour` matching `rice flour`
+- Avoids false ingredient matches such as `peanut butter` matching `butter`
 - Shows available and missing ingredients
 - Provides API routes using FastAPI
 - Provides Swagger UI for testing
@@ -48,7 +50,9 @@ The system then recommends recipes and shows:
 - FastAPI
 - Swagger UI
 - Uvicorn
-- Requests
+- MongoDB
+- PyMongo
+- Python Dotenv
 - JSON
 - Pytest
 - Git
@@ -58,7 +62,7 @@ The system then recommends recipes and shows:
 
 The system uses an agent-based workflow.
 
-The main agent is responsible for coordinating the tools and controlling the recommendation process. The user does not interact directly with each tool. Instead, the user sends ingredients to the API, and the agent decides how to process the request.
+The main agent is responsible for coordinating the tools and controlling the recommendation process. The user does not interact directly with each internal tool. Instead, the user sends ingredients to the API, and the agent decides how to process the request.
 
 The workflow is:
 
@@ -66,7 +70,7 @@ The workflow is:
 User input
 → Recipe Recommendation Agent
 → Ingredient Parser Tool
-→ TheMealDB API Tool or Local Recipe Database Tool
+→ MongoDB Recipe Database Tool
 → Recipe Matcher Tool
 → Report Generator Tool
 → Final recommendation response
@@ -75,11 +79,10 @@ User input
 The agent performs the following responsibilities:
 
 1. Receives raw ingredient input from the user.
-2. Calls the Ingredient Parser Tool to clean and normalize the input.
-3. Tries to retrieve recipes from TheMealDB API when online mode is enabled.
-4. Uses the local recipe database if the online API is disabled or unavailable.
-5. Calls the Recipe Matcher Tool to calculate recipe compatibility.
-6. Calls the Report Generator Tool to create the final structured response.
+2. Calls the Ingredient Parser Tool to clean the input.
+3. Calls the MongoDB Recipe Database Tool to retrieve candidate recipes.
+4. Calls the Recipe Matcher Tool to calculate recipe compatibility.
+5. Calls the Report Generator Tool to create the final structured response.
 
 ## Tools Used by the System
 
@@ -101,25 +104,35 @@ Example output:
 
 This tool removes extra spaces, converts text to lowercase, and removes duplicate ingredients.
 
-### Recipe API Tool
+### Ingredient Normalizer Tool
 
-The Recipe API Tool connects to TheMealDB API and retrieves online recipes based on a main ingredient.
+The Ingredient Normalizer Tool normalizes ingredient names so they can be compared consistently.
 
-The API response is received in JSON format and converted into the internal recipe format used by the system.
-
-### Local Recipe Database Tool
-
-The Local Recipe Database Tool reads recipes from:
+For example:
 
 ```text
-data/recipes.json
+eggs → egg
+tomatoes → tomato
+all-purpose flour → all purpose flour
 ```
 
-This local database is used when:
+This improves matching while avoiding incorrect partial matches.
 
-- the user disables the online API;
-- the external API is unavailable;
-- the system needs fallback data.
+For example:
+
+```text
+flour does not match brown rice flour
+flour does not match flour tortilla
+peanut butter does not match butter
+```
+
+### MongoDB Recipe Database Tool
+
+The MongoDB Recipe Database Tool connects to MongoDB and retrieves recipe candidates.
+
+MongoDB is used as the main database because the full converted recipe dataset is too large to store directly in GitHub.
+
+The tool searches recipes using normalized ingredients stored in the database.
 
 ### Recipe Matcher Tool
 
@@ -144,7 +157,7 @@ Match score:
 3 / 4 = 75%
 ```
 
-The matcher also supports partial ingredient matching. For example, if a recipe has `all-purpose flour` and the user enters `flour`, the system can still identify a match.
+The matcher uses strict ingredient comparison to avoid false positives.
 
 ### Report Generator Tool
 
@@ -154,8 +167,6 @@ The response includes:
 
 - user ingredients;
 - data source;
-- fallback status;
-- API error, if any;
 - total recommendations;
 - summary;
 - recommended recipes;
@@ -163,25 +174,15 @@ The response includes:
 - missing ingredients;
 - source links when available.
 
-## External Data Sources
+## External Data Source
 
-This project uses two external data sources.
-
-### TheMealDB API
-
-TheMealDB API is used as an online recipe source.
-
-The system searches recipes using the first ingredient provided by the user. After retrieving recipes, the agent applies its own matching and ranking logic using all ingredients entered by the user.
-
-### GitHub Recipe Dataset
-
-This project also uses recipe data adapted from the public GitHub repository:
+This project uses recipe data adapted from the public GitHub repository:
 
 ```text
 https://github.com/dpapathanasiou/recipes
 ```
 
-The dataset is used as a large local recipe source.
+The dataset is used as the main recipe source.
 
 The external repository itself is not committed directly into this project repository. It is downloaded locally into:
 
@@ -191,11 +192,7 @@ data/external/recipes-github/
 
 This folder is ignored by Git using `.gitignore`.
 
-The converted recipe database is stored in:
-
-```text
-data/recipes.json
-```
+The external dataset is first converted into the internal project format and then imported into MongoDB.
 
 ## Data Conversion Process
 
@@ -218,8 +215,8 @@ During conversion, the system:
 - extracts source URLs;
 - removes duplicate recipes;
 - removes invalid recipes;
-- converts the data into the internal format;
-- saves the result in `data/recipes.json`;
+- converts the data into the internal project format;
+- saves the result locally in `data/recipes.json`;
 - creates an import summary in `data/recipes_import_summary.json`.
 
 The ingredient cleaning process removes:
@@ -243,6 +240,25 @@ Example conversions:
 
 This conversion improves consistency and helps the matcher compare user ingredients with recipe ingredients more accurately.
 
+## MongoDB Import Process
+
+After the external dataset is converted into `data/recipes.json`, the recipes are imported into MongoDB using:
+
+```text
+scripts/import_recipes_to_mongodb.py
+```
+
+During the MongoDB import process, the system:
+
+- reads the converted `data/recipes.json` file;
+- adds a `normalized_ingredients` field to each recipe;
+- inserts recipes into MongoDB in batches;
+- creates indexes for better search performance.
+
+The full generated `data/recipes.json` file is not committed to GitHub because it is larger than GitHub's file size limit.
+
+Instead, the project includes scripts that allow the database to be recreated locally.
+
 ## Project Structure
 
 ```text
@@ -257,16 +273,17 @@ ai-recipe-recommendation-agent/
 │   └── tools/
 │       ├── __init__.py
 │       ├── ingredient_parser.py
-│       ├── recipe_api.py
-│       ├── recipe_database.py
+│       ├── ingredient_normalizer.py
+│       ├── recipe_mongodb.py
 │       ├── recipe_matcher.py
 │       └── report_generator.py
 │
 ├── scripts/
-│   └── import_github_recipes.py
+│   ├── import_github_recipes.py
+│   └── import_recipes_to_mongodb.py
 │
 ├── data/
-│   ├── recipes.json
+│   ├── recipes_sample.json
 │   ├── recipes_import_summary.json
 │   └── external/
 │       └── recipes-github/
@@ -278,9 +295,61 @@ ai-recipe-recommendation-agent/
 │   ├── test_ingredient_parser.py
 │   └── test_recipe_matcher.py
 │
+├── .env.example
 ├── README.md
 ├── requirements.txt
 └── .gitignore
+```
+
+## Important GitHub Note
+
+The full file below is generated locally and should not be committed to GitHub:
+
+```text
+data/recipes.json
+```
+
+This file can be larger than 100 MB, which exceeds GitHub's file size limit.
+
+The following files and folders are ignored by Git:
+
+```text
+data/recipes.json
+data/external/recipes-github/
+.env
+venv/
+__pycache__/
+.pytest_cache/
+```
+
+The project stores the large recipe dataset in MongoDB instead of GitHub.
+
+## Environment Variables
+
+Create a `.env` file in the project root.
+
+Example:
+
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+MONGODB_DATABASE=recipe_agent
+MONGODB_COLLECTION=recipes
+```
+
+The `.env` file must not be committed to GitHub because it contains sensitive connection information.
+
+A safe example file should be included as:
+
+```text
+.env.example
+```
+
+Example `.env.example`:
+
+```env
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+MONGODB_DATABASE=recipe_agent
+MONGODB_COLLECTION=recipes
 ```
 
 ## Installation
@@ -315,15 +384,21 @@ source venv/bin/activate
 Install dependencies:
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
-## Importing the External Recipe Dataset
+## Preparing the External Dataset
 
 Create the external data folder:
 
 ```bash
 mkdir -p data/external
+```
+
+On Windows PowerShell:
+
+```powershell
+mkdir data\external
 ```
 
 Clone the external recipe dataset:
@@ -332,14 +407,7 @@ Clone the external recipe dataset:
 git clone --depth 1 https://github.com/dpapathanasiou/recipes.git data/external/recipes-github
 ```
 
-On Windows PowerShell:
-
-```powershell
-mkdir data\external
-git clone --depth 1 https://github.com/dpapathanasiou/recipes.git data\external\recipes-github
-```
-
-Run the import script:
+Run the conversion script:
 
 ```bash
 python scripts/import_github_recipes.py
@@ -362,6 +430,24 @@ For the final version, import all available recipes:
 
 ```bash
 python scripts/import_github_recipes.py
+```
+
+## Importing Recipes into MongoDB
+
+After creating `data/recipes.json`, import the converted recipes into MongoDB:
+
+```bash
+python scripts/import_recipes_to_mongodb.py --clear
+```
+
+The `--clear` option removes existing recipes from the collection before importing the new data.
+
+If the import works correctly, the terminal will show a message similar to:
+
+```text
+Imported 50000 recipes into MongoDB.
+Database: recipe_agent
+Collection: recipes
 ```
 
 ## Running the Application
@@ -404,47 +490,41 @@ Example response:
 }
 ```
 
-### GET `/recipes/local`
+### GET `/database/status`
 
-Returns recipes from the local database.
+Checks the MongoDB connection and returns database information.
 
-Example:
+Example response:
 
-```text
-http://127.0.0.1:8000/recipes/local?limit=5
+```json
+{
+  "status": "connected",
+  "database": "recipe_agent",
+  "collection": "recipes",
+  "total_recipes": 50000
+}
 ```
 
-### GET `/external/search/{ingredient}`
+### GET `/recipes/search`
 
-Searches recipes from TheMealDB API using one main ingredient.
+Searches candidate recipes from MongoDB using one or more ingredients.
 
 Example:
 
 ```text
-http://127.0.0.1:8000/external/search/chicken
+http://127.0.0.1:8000/recipes/search?ingredients=flour,sugar,eggs&limit=10
 ```
 
 ### POST `/recommend`
 
 Recommends recipes based on the ingredients provided by the user.
 
-Example request using the local database:
+Example request:
 
 ```json
 {
   "ingredients": "flour, sugar, eggs, butter",
-  "max_results": 5,
-  "use_online_api": false
-}
-```
-
-Example request using the online API:
-
-```json
-{
-  "ingredients": "chicken, rice, tomato",
-  "max_results": 5,
-  "use_online_api": true
+  "max_results": 5
 }
 ```
 
@@ -458,9 +538,7 @@ Example response:
     "eggs",
     "butter"
   ],
-  "data_source": "local database",
-  "fallback_used": false,
-  "api_error": null,
+  "data_source": "MongoDB recipe database",
   "total_recommendations": 5,
   "summary": "The best recommendation is Example Recipe with a match score of 75.0%.",
   "recommendations": [
@@ -470,7 +548,7 @@ Example response:
       "category": "external",
       "area": "unknown",
       "difficulty": "unknown",
-      "source": "local database",
+      "source": "allrecipes.com",
       "match_score": 75.0,
       "available_ingredients": [
         "flour",
@@ -480,10 +558,13 @@ Example response:
       "missing_ingredients": [
         "butter"
       ],
-      "original_ingredients": null,
-      "image_url": null,
-      "source_url": "https://example.com",
-      "youtube_url": null
+      "original_ingredients": [
+        "1 cup flour",
+        "1 cup sugar",
+        "2 eggs",
+        "1/2 cup butter"
+      ],
+      "source_url": "https://example.com"
     }
   ]
 }
@@ -499,23 +580,30 @@ http://127.0.0.1:8000/docs
 
 Then test the `POST /recommend` endpoint.
 
-Recommended test using local database:
+Recommended test:
 
 ```json
 {
   "ingredients": "flour, sugar, eggs, butter",
-  "max_results": 5,
-  "use_online_api": false
+  "max_results": 5
 }
 ```
 
-Recommended test using online API:
+You can also test:
 
 ```json
 {
-  "ingredients": "chicken, rice, tomato",
-  "max_results": 5,
-  "use_online_api": true
+  "ingredients": "peanut butter, bread",
+  "max_results": 5
+}
+```
+
+And:
+
+```json
+{
+  "ingredients": "tomato, cheese, pasta",
+  "max_results": 5
 }
 ```
 
@@ -524,8 +612,10 @@ Recommended test using online API:
 Run all tests:
 
 ```bash
-pytest
+python -m pytest
 ```
+
+Using `python -m pytest` is recommended because it works more reliably on Windows virtual environments.
 
 The tests verify:
 
@@ -534,10 +624,10 @@ The tests verify:
 - invalid input handling;
 - ingredient cleaning during import;
 - recipe matching;
-- partial ingredient matching;
-- local database recommendation;
+- strict ingredient matching;
+- plural and singular ingredient matching;
+- agent workflow with a fake database;
 - API endpoints;
-- local recipe endpoint;
 - dataset conversion logic.
 
 ## Input and Output Handling
@@ -556,18 +646,21 @@ The Ingredient Parser Tool converts this string into a list:
 ["flour", "sugar", "eggs", "butter"]
 ```
 
-The agent then sends this list to the API tool or local database tool. Recipes are loaded as dictionaries, and each recipe contains fields such as:
+The agent then sends this list to the MongoDB Recipe Database Tool. MongoDB returns candidate recipes as dictionaries.
+
+Each recipe contains fields such as:
 
 ```json
 {
   "name": "Recipe Name",
   "ingredients": ["flour", "sugar", "eggs"],
+  "normalized_ingredients": ["flour", "sugar", "egg"],
   "category": "external",
   "difficulty": "unknown"
 }
 ```
 
-The matcher compares the user's ingredients with each recipe and returns structured recommendation data.
+The Recipe Matcher Tool compares the user's normalized ingredients with each recipe's normalized ingredients and returns structured recommendation data.
 
 The final response is returned as JSON through the FastAPI API.
 
@@ -576,13 +669,13 @@ The final response is returned as JSON through the FastAPI API.
 The system handles several error cases:
 
 - empty ingredient input;
-- missing local recipe database;
-- invalid recipe database format;
-- unavailable external API;
-- failed external API request;
-- recipes without valid ingredients.
+- missing MongoDB connection string;
+- unavailable MongoDB database;
+- invalid database configuration;
+- recipes without valid ingredients;
+- no matching recipes found.
 
-When the online API fails, the system uses the local recipe database as fallback.
+If MongoDB is not configured correctly, the system returns an error explaining that `MONGODB_URI` is missing or invalid.
 
 ## Deployment Preparation
 
@@ -596,20 +689,20 @@ uvicorn src.main:app --reload
 
 This deployment approach is suitable for controlled testing because the user can run the API locally, test it through Swagger, and verify the output before using it in a real environment.
 
-In the future, the system could be deployed as:
-
-- a Docker container;
-- a cloud web service;
-- an API-based assistant;
-- a public recipe recommendation service.
+The MongoDB connection is configured through environment variables, which makes the application easier to deploy safely.
 
 ## Proposed Deployment Strategy
 
 The recommended deployment strategy is a staged release.
 
-First, the system should be tested locally using the local recipe database and Swagger. After local testing, the online API integration should be tested. Then, the system can be deployed to a controlled environment such as a local server, Docker container, or a cloud platform.
+First, the system should be tested locally using Swagger and a MongoDB test database. After local testing, the full recipe dataset should be imported into MongoDB. Then, the system can be deployed to a controlled environment such as:
 
-This strategy reduces risk because the system can still work with the local database if the external API becomes unavailable.
+- local server;
+- Docker container;
+- cloud web service;
+- API-based assistant.
+
+This strategy reduces risk because the application logic can be tested separately from the full production database.
 
 ## Version Control
 
@@ -622,33 +715,48 @@ git add .
 git commit -m "Create initial FastAPI recipe recommendation agent"
 
 git add .
-git commit -m "Add TheMealDB API integration with local fallback"
-
-git add .
 git commit -m "Add external recipe dataset import script"
 
 git add .
 git commit -m "Improve ingredient cleaning and recipe matching"
 
 git add .
-git commit -m "Add tests for API and dataset import workflow"
+git commit -m "Replace external API with MongoDB recipe database"
+
+git add .
+git commit -m "Add MongoDB import workflow"
 
 git add .
 git commit -m "Update README documentation"
 ```
 
+Before pushing to GitHub, confirm that the large dataset is not staged:
+
+```bash
+git status
+```
+
+Do not push:
+
+```text
+data/recipes.json
+data/external/recipes-github/
+.env
+```
+
 ## Project Status
 
-Current version: `0.3.0`
+Current version: `0.4.0`
 
 The system currently supports:
 
-- local recipe recommendation;
-- online recipe search through TheMealDB API;
-- local fallback database;
+- recipe recommendation through MongoDB;
 - external dataset import;
 - data conversion;
 - ingredient cleaning;
+- normalized database search;
+- strict ingredient matching;
+- FastAPI routes;
 - Swagger testing;
 - automated tests.
 
@@ -674,10 +782,14 @@ This project uses recipe data adapted from the public GitHub repository:
 https://github.com/dpapathanasiou/recipes
 ```
 
-The external dataset is used only as a local recipe data source. The data is converted into the internal format required by this project.
+The external dataset is used as the recipe data source. The data is converted into the internal format required by this project and then imported into MongoDB.
 
 The external repository is not included directly in this repository. It should be cloned separately into:
 
 ```text
 data/external/recipes-github/
 ```
+
+## License
+
+This project is for academic and educational purposes.

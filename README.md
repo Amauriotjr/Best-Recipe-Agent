@@ -1,6 +1,6 @@
-# AI Recipe Recommendation Agent
+# Recipe Recommendation Agent
 
-AI Recipe Recommendation Agent is a Python-based agent system that recommends recipes based on ingredients provided by the user.
+Recipe Recommendation Agent is a Python-based agent system that recommends recipes based on ingredients provided by the user.
 
 The system receives a list of ingredients, processes the input, compares it with a local recipe database, and returns recipe recommendations with match scores and missing ingredients.
 

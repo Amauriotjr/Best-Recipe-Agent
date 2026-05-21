@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Cheese Omelette",
+    "ingredients": ["eggs", "cheese", "salt", "pepper"],
+    "category": "breakfast",
+    "difficulty": "easy"
+  },
+  {
+    "name": "Egg Fried Rice",
+    "ingredients": ["rice", "eggs", "soy sauce", "onion"],
+    "category": "lunch",
+    "difficulty": "medium"
+  },
+  {
+    "name": "Tomato Pasta",
+    "ingredients": ["pasta", "tomato", "garlic", "olive oil", "salt"],
+    "category": "dinner",
+    "difficulty": "easy"
+  },
+  {
+    "name": "Grilled Cheese Sandwich",
+    "ingredients": ["bread", "cheese", "butter"],
+    "category": "snack",
+    "difficulty": "easy"
+  },
+  {
+    "name": "Simple Salad",
+    "ingredients": ["lettuce", "tomato", "cucumber", "olive oil", "salt"],
+    "category": "lunch",
+    "difficulty": "easy"
+  },
+  {
+    "name": "Banana Pancake",
+    "ingredients": ["banana", "eggs", "flour", "milk"],
+    "category": "breakfast",
+    "difficulty": "medium"
+  }
+]

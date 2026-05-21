@@ -3,10 +3,6 @@ from pathlib import Path
 
 
 class RecipeDatabaseTool:
-    """
-    Tool responsible for loading recipes from a local JSON database.
-    This is used as a fallback if the external API is not available.
-    """
 
     def __init__(self, database_path: str = "data/recipes.json"):
         self.database_path = Path(database_path)
@@ -21,4 +17,18 @@ class RecipeDatabaseTool:
         if not isinstance(recipes, list):
             raise ValueError("Recipe database must contain a list of recipes.")
 
-        return recipes
+        valid_recipes = []
+
+        for recipe in recipes:
+            if not isinstance(recipe, dict):
+                continue
+
+            if "name" not in recipe or "ingredients" not in recipe:
+                continue
+
+            if not isinstance(recipe["ingredients"], list):
+                continue
+
+            valid_recipes.append(recipe)
+
+        return valid_recipes

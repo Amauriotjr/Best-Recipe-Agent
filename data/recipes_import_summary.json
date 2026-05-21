@@ -1,0 +1,9 @@
+{
+  "source_dir": "data\\external\\recipes-github\\index",
+  "output_file": "data\\recipes.json",
+  "total_json_files_found": 73322,
+  "total_recipes_imported": 1000,
+  "total_files_skipped": 0,
+  "skipped_files_sample": [],
+  "limit_used": 1000
+}

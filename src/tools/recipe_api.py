@@ -2,7 +2,7 @@ import requests
 
 
 class RecipeApiTool:
-
+    
     BASE_URL = "https://www.themealdb.com/api/json/v1/1"
 
     def search_by_main_ingredient(self, ingredient: str) -> list[dict]:

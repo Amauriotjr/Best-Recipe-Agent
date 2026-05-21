@@ -1,3 +1,6 @@
+import re
+
+
 class RecipeMatcherTool:
 
     def match(
@@ -7,33 +10,45 @@ class RecipeMatcherTool:
         max_results: int = 5
     ) -> list[dict]:
 
-        user_ingredient_set = set(user_ingredients)
+        normalized_user_ingredients = {
+            self._normalize_ingredient(ingredient)
+            for ingredient in user_ingredients
+            if ingredient and str(ingredient).strip()
+        }
+
         recommendations = []
 
         for recipe in recipes:
             recipe_ingredients = recipe.get("ingredients", [])
 
-            normalized_recipe_ingredients = [
-                ingredient.strip().lower()
-                for ingredient in recipe_ingredients
-                if ingredient and ingredient.strip()
-            ]
-
-            recipe_ingredient_set = set(normalized_recipe_ingredients)
-
-            if not recipe_ingredient_set:
+            if not recipe_ingredients:
                 continue
 
-            available_ingredients = sorted(
-                user_ingredient_set.intersection(recipe_ingredient_set)
+            available_ingredients = []
+            missing_ingredients = []
+
+            for recipe_ingredient in recipe_ingredients:
+                normalized_recipe_ingredient = self._normalize_ingredient(
+                    recipe_ingredient
+                )
+
+                if not normalized_recipe_ingredient:
+                    continue
+
+                if normalized_recipe_ingredient in normalized_user_ingredients:
+                    available_ingredients.append(str(recipe_ingredient))
+                else:
+                    missing_ingredients.append(str(recipe_ingredient))
+
+            total_valid_ingredients = (
+                len(available_ingredients) + len(missing_ingredients)
             )
 
-            missing_ingredients = sorted(
-                recipe_ingredient_set.difference(user_ingredient_set)
-            )
+            if total_valid_ingredients == 0:
+                continue
 
             match_score = round(
-                (len(available_ingredients) / len(recipe_ingredient_set)) * 100,
+                (len(available_ingredients) / total_valid_ingredients) * 100,
                 2
             )
 
@@ -47,11 +62,12 @@ class RecipeMatcherTool:
                         "difficulty": recipe.get("difficulty", "unknown"),
                         "source": recipe.get("source", "local database"),
                         "match_score": match_score,
-                        "available_ingredients": available_ingredients,
-                        "missing_ingredients": missing_ingredients,
+                        "available_ingredients": sorted(available_ingredients),
+                        "missing_ingredients": sorted(missing_ingredients),
+                        "original_ingredients": recipe.get("original_ingredients"),
                         "image_url": recipe.get("image_url"),
                         "source_url": recipe.get("source_url"),
-                        "youtube_url": recipe.get("youtube_url")
+                        "youtube_url": recipe.get("youtube_url"),
                     }
                 )
 
@@ -61,3 +77,51 @@ class RecipeMatcherTool:
         )
 
         return recommendations[:max_results]
+
+    def _normalize_ingredient(self, ingredient: str) -> str:
+
+        ingredient = str(ingredient).lower().strip()
+
+        ingredient = ingredient.replace("-", " ")
+
+        ingredient = re.sub(r"[^a-z0-9\s]", " ", ingredient)
+
+        ingredient = re.sub(r"\s+", " ", ingredient)
+
+        ingredient = ingredient.strip()
+
+        ingredient = self._singularize_phrase(ingredient)
+
+        return ingredient
+
+    def _singularize_phrase(self, ingredient: str) -> str:
+
+        words = ingredient.split()
+
+        singular_words = [
+            self._singularize_word(word)
+            for word in words
+        ]
+
+        return " ".join(singular_words)
+
+    def _singularize_word(self, word: str) -> str:
+        if len(word) > 4 and word.endswith("ies"):
+            return word[:-3] + "y"
+
+        if len(word) > 4 and word.endswith("oes"):
+            return word[:-2]
+
+        if len(word) > 4 and word.endswith("ches"):
+            return word[:-2]
+
+        if len(word) > 4 and word.endswith("shes"):
+            return word[:-2]
+
+        if len(word) > 4 and word.endswith("xes"):
+            return word[:-2]
+
+        if len(word) > 3 and word.endswith("s"):
+            return word[:-1]
+
+        return word

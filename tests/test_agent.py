@@ -5,8 +5,8 @@ def test_agent_returns_recommendations_using_local_database():
     agent = RecipeRecommendationAgent(database_path="data/recipes.json")
 
     result = agent.recommend(
-        raw_ingredients="eggs, cheese, salt",
-        max_results=3,
+        raw_ingredients="flour, sugar, eggs, butter",
+        max_results=5,
         use_online_api=False
     )
 
@@ -20,9 +20,9 @@ def test_agent_returns_user_ingredients():
     agent = RecipeRecommendationAgent(database_path="data/recipes.json")
 
     result = agent.recommend(
-        raw_ingredients="eggs, cheese",
+        raw_ingredients="flour, sugar",
         max_results=3,
         use_online_api=False
     )
 
-    assert result["user_ingredients"] == ["eggs", "cheese"]
+    assert result["user_ingredients"] == ["flour", "sugar"]

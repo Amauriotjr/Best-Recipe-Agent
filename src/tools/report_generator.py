@@ -26,6 +26,7 @@ class ReportGeneratorTool:
             "data_source": data_source,
             "fallback_used": fallback_used,
             "api_error": api_error,
+            "total_recommendations": len(recommendations),
             "summary": (
                 f"The best recommendation is {best_recipe['name']} "
                 f"with a match score of {best_recipe['match_score']}%."

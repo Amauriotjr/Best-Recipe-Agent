@@ -6,9 +6,6 @@ from src.tools.report_generator import ReportGeneratorTool
 
 
 class RecipeRecommendationAgent:
-    """
-    Main agent responsible for coordinating the recipe recommendation workflow.
-    """
 
     def __init__(self, database_path: str = "data/recipes.json"):
         self.ingredient_parser = IngredientParserTool()

@@ -10,7 +10,7 @@ app = FastAPI(
         "An agent-based Python API that recommends recipes based on "
         "available ingredients using TheMealDB API and a local fallback database."
     ),
-    version="0.2.0"
+    version="0.3.0"
 )
 
 agent = RecipeRecommendationAgent()
@@ -20,7 +20,7 @@ agent = RecipeRecommendationAgent()
 def root():
     return {
         "message": "Welcome to the AI Recipe Recommendation Agent API.",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "docs": "/docs"
     }
 
@@ -49,11 +49,14 @@ def recommend_recipes(request: RecommendationRequest):
 
 
 @app.get("/recipes/local")
-def get_local_recipes():
+def get_local_recipes(limit: int = Query(default=20, ge=1, le=100)):
     try:
+        recipes = agent.recipe_database.load_recipes()
+
         return {
             "source": "local database",
-            "recipes": agent.recipe_database.load_recipes()
+            "total_recipes": len(recipes),
+            "recipes": recipes[:limit]
         }
 
     except FileNotFoundError as error:

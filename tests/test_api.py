@@ -17,13 +17,14 @@ def test_recommend_endpoint_with_local_database():
     response = client.post(
         "/recommend",
         json={
-            "ingredients": "eggs, cheese, salt",
-            "max_results": 3,
+            "ingredients": "flour, sugar, eggs, butter",
+            "max_results": 5,
             "use_online_api": False
         }
     )
 
     assert response.status_code == 200
+
     data = response.json()
 
     assert "summary" in data
@@ -42,3 +43,14 @@ def test_recommend_endpoint_rejects_empty_input():
     )
 
     assert response.status_code == 400
+
+
+def test_local_recipes_endpoint():
+    response = client.get("/recipes/local?limit=5")
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert "recipes" in data
+    assert "total_recipes" in data

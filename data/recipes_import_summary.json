@@ -2,8 +2,89 @@
   "source_dir": "data\\external\\recipes-github\\index",
   "output_file": "data\\recipes.json",
   "total_json_files_found": 73322,
-  "total_recipes_imported": 1000,
-  "total_files_skipped": 0,
-  "skipped_files_sample": [],
-  "limit_used": 1000
+  "total_recipes_imported": 73161,
+  "total_files_skipped": 161,
+  "skipped_files_sample": [
+    {
+      "file": "data\\external\\recipes-github\\index\\a\\angel-punch-200120.json",
+      "reason": "Duplicate recipe"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\a\\apple-raisin-bread-pudding-104973.json",
+      "reason": "Duplicate recipe"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\a\\artichokes-provencal-recipe.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\a\\asian-lamb-stir-fry-in-radicchio-wraps-109696.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\bacon-deviled-eggs-recipe.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\baltimore-eggnog-200003.json",
+      "reason": "Duplicate recipe"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\banana-pineapple-yogurt-smoothie-201188.json",
+      "reason": "Duplicate recipe"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\barley-and-mushroom-pilaf-107296.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\basic-stuffing.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\basil-rubbed-halibut-with-puttanesca-relish.json",
+      "reason": "Duplicate recipe"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\bees-knees-200473.json",
+      "reason": "Duplicate recipe"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\blackberry-kir-royale-200545.json",
+      "reason": "Duplicate recipe"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\bloody-marys-recipe.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\boiled-carrots-with-prepared-horseradish-51154600.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\braised-cabbage-recipe.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\braised-celery-recipe.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\broiled-banana-splits-recipe.json",
+      "reason": "No valid ingredients found"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\bucks-fizz-i-200425.json",
+      "reason": "Duplicate recipe"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\b\\butternut-squash-and-apple-soup-recipe2.json",
+      "reason": "Duplicate recipe"
+    },
+    {
+      "file": "data\\external\\recipes-github\\index\\c\\cafeteria-sloppy-joes-recipe.json",
+      "reason": "No valid ingredients found"
+    }
+  ],
+  "limit_used": null
 }

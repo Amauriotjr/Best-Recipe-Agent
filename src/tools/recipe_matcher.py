@@ -68,6 +68,9 @@ class RecipeMatcherTool:
                         "available_ingredients": sorted(available_ingredients),
                         "missing_ingredients": sorted(missing_ingredients),
                         "original_ingredients": recipe.get("original_ingredients"),
+                        "instructions": self._format_instructions(
+                            recipe.get("instructions", [])
+                        ),
                         "source_url": recipe.get("source_url"),
                     }
                 )
@@ -78,3 +81,25 @@ class RecipeMatcherTool:
         )
 
         return recommendations[:max_results]
+
+    def _format_instructions(self, instructions):
+        
+        if instructions is None:
+            return []
+
+        if isinstance(instructions, list):
+            return [
+                str(step).strip()
+                for step in instructions
+                if str(step).strip()
+            ]
+
+        if isinstance(instructions, str):
+            cleaned_text = instructions.strip()
+
+            if not cleaned_text:
+                return []
+
+            return [cleaned_text]
+
+        return [str(instructions)]
